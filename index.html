@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ku">
+<head>
+<meta charset="UTF-8">
+<title>دکتۆر ئایتی مستەفا POS</title>
+
+<style>
+body{margin:0;font-family:Arial;background:#eef2f7}
+
+/* LOGIN */
+.login{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#1976d2;
+}
+
+.box{
+  background:#fff;
+  padding:20px;
+  width:300px;
+  border-radius:10px;
+}
+
+.title{
+  text-align:center;
+  color:#1976d2;
+  font-size:20px;
+  font-weight:bold;
+}
+
+.sub{
+  text-align:center;
+  color:#666;
+  font-size:12px;
+  margin-bottom:10px;
+}
+
+input,button{
+  width:100%;
+  padding:8px;
+  margin:5px 0;
+}
+
+button{
+  background:#1976d2;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+}
+
+/* APP */
+.app{display:none;padding:10px}
+
+.card{
+  background:#fff;
+  padding:10px;
+  margin:8px 0;
+  border-radius:8px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- 🔐 LOGIN -->
+<div class="login" id="loginBox">
+<div class="box">
+
+<div class="title">دکتۆر ئایتی مستەفا</div>
+<div class="sub">POS SYSTEM 🔐</div>
+
+<input id="u" placeholder="user">
+<input id="p" type="password" placeholder="password">
+
+<button onclick="login()">چوون</button>
+
+</div>
+</div>
+
+<!-- 🏪 APP -->
+<div class="app" id="app">
+
+<div class="card">
+📊 داشبۆرد <br><br>
+💰 فرۆشتن: <span id="salesBox">0</span>$ <br>
+💵 قازانج: <span id="profitBox">0</span>$ <br>
+📦 کاڵا: <span id="pcBox">0</span> <br>
+💳 قەرز: <span id="debtBox">0</span>$
+</div>
+
+<!-- 📦 ADD PRODUCT -->
+<div class="card">
+<h3>📦 زیادکردنی کاڵا</h3>
+
+<input id="name" placeholder="ناو">
+<input id="price" placeholder="نرخ">
+<input id="stock" placeholder="ستۆک">
+
+<button onclick="addProduct()">زیادکردن</button>
+</div>
+
+<!-- 📦 LIST -->
+<div id="list"></div>
+
+<!-- 🛒 SELL -->
+<div class="card">
+<h3>🛒 فرۆشتن</h3>
+
+<input id="qty" placeholder="ژمارە">
+<button onclick="sell()">فرۆشتن</button>
+</div>
+
+</div>
+
+<script>
+
+/* USERS */
+let users=[
+ {u:"mustafa",p:"0770199",role:"admin"},
+ {u:"staff",p:"0771198",role:"staff"}
+];
+
+let currentUser=null;
+
+/* DATA */
+let products=[];
+let customers={};
+
+let selected=0;
+
+let sales=0;
+let profit=0;
+
+/* 🔐 LOGIN */
+function login(){
+
+ let found = users.find(x=>x.u===u.value && x.p===p.value);
+
+ if(!found){
+  alert("هەڵەی لۆگین");
+  return;
+ }
+
+ currentUser=found;
+
+ loginBox.style.display="none";
+ app.style.display="block";
+
+ render();
+}
+
+/* 📦 ADD PRODUCT */
+function addProduct(){
+
+ if(currentUser.role!=="admin"){
+  alert("❌ تەنها ئەدمین");
+  return;
+ }
+
+ products.push({
+  name:name.value,
+  price:+price.value,
+  stock:+stock.value
+ });
+
+ name.value="";
+ price.value="";
+ stock.value="";
+
+ render();
+}
+
+/* 🗑 DELETE */
+function del(i){
+
+ if(currentUser.role!=="admin"){
+  alert("❌ تەنها ئەدمین");
+  return;
+ }
+
+ if(!confirm("ئایا دڵنیایت؟")) return;
+
+ products.splice(i,1);
+
+ render();
+}
+
+/* 🛒 SELL + DEBT */
+function sell(){
+
+ let qty=+qty.value;
+
+ let p=products[selected];
+
+ if(!p){
+  alert("هیچ کاڵا نییە");
+  return;
+ }
+
+ if(qty>p.stock){
+  alert("ستۆک کەمە");
+  return;
+ }
+
+ let total=p.price*qty;
+
+ p.stock-=qty;
+
+ let cname=prompt("ناوی کڕیار");
+
+ if(!customers[cname]){
+  customers[cname]={debt:0};
+ }
+
+ customers[cname].debt+=total;
+
+ sales+=total;
+ profit+=total*0.3;
+
+ qty.value="";
+
+ render();
+}
+
+/* SELECT */
+function select(i){
+ selected=i;
+}
+
+/* 📦 RENDER */
+function render(){
+
+ list.innerHTML="";
+
+ products.forEach((p,i)=>{
+  list.innerHTML+=`
+   <div class="card" onclick="select(${i})">
+    📦 ${p.name} <br>
+    💵 ${p.price}$ <br>
+    📦 ${p.stock} <br>
+
+    ${currentUser.role==="admin" ? `<button onclick="del(${i})">🗑 سڕینەوە</button>` : ""}
+   </div>
+  `;
+ });
+
+ let debt=0;
+ for(let k in customers){
+  debt+=customers[k].debt;
+ }
+
+ document.getElementById("salesBox").innerText=sales;
+ document.getElementById("profitBox").innerText=profit;
+ document.getElementById("pcBox").innerText=products.length;
+ document.getElementById("debtBox").innerText=debt;
+}
+
+</script>
+
+</body>
+</html>
